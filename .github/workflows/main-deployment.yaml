@@ -1,0 +1,44 @@
+on:
+  push:
+    branches:
+    - main
+    - feature/*
+    - release/*
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  checks: write
+  issues: read
+  pull-requests: write
+
+name: Deploy ALZ Platform Landing Zones
+
+jobs:
+### RUN CHECKS ###
+  run_checks:
+    uses: alztestappvia/alz_cicd_templates/.github/workflows/terraform-checks.yaml@main
+    name: Run Checks
+    secrets:
+      GH_TOKEN: ${{ secrets.ALZ_GITHUB_MODULE_READ_TOKEN }}
+
+  deploy_to_dev:
+    uses: ./.github/workflows/template_deploy-to-environment.yml
+    name: Deploy to Dev
+    needs: run_checks
+    with:
+      platformEnvironment: 'Test'
+      appEnvironment: 'dev'
+    secrets:
+      GH_TOKEN: ${{ secrets.ALZ_GITHUB_MODULE_READ_TOKEN }}
+
+  deploy_to_prod:
+    uses: ./.github/workflows/template_deploy-to-environment.yml
+    name: Deploy to Prod
+    needs: run_checks
+    with:
+      platformEnvironment: 'Prod'
+      appEnvironment: 'prd'
+    secrets:
+      GH_TOKEN: ${{ secrets.ALZ_GITHUB_MODULE_READ_TOKEN }}
